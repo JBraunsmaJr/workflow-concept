@@ -1,26 +1,112 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, {useCallback, useMemo, useRef} from 'react';
+import ReactFlow, {
+    addEdge,
+    Background,
+    BackgroundVariant,
+    ConnectionLineType,
+    Controls, ReactFlowProvider,
+    useEdgesState,
+    useNodesState,
+} from 'reactflow';
+import MiniDrawer, { EditorNodeButton } from "./SideNav"
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import 'reactflow/dist/style.css';
+import StartNode from "./editor-nodes/StartNode";
+import TransitionToNode from "./editor-nodes/TransitionToNode";
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StartIcon from '@mui/icons-material/Start';
+
+const initialNodes = [
+    {
+      id: '1',
+      position: { x: 0, y: 0 },
+      type: "startNode",
+      data: {}
+    }
+];
+
+export function generateGUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+            v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
-export default App;
+const navButtons: EditorNodeButton[] = [
+    {
+        name: "Start",
+        nodeId: "startNode",
+        icon: <PlayArrowIcon/>,
+        defaultData: { label: "" },
+        onClick: (flow) =>{
+            const viewport = flow.getViewport();
+            flow.addNodes([
+                {
+                    id: generateGUID(),
+                    position: { x: viewport.x, y: viewport.y},
+                    type: "startNode",
+                    data: { label: "" }
+                }
+            ]);
+        }
+    },
+    {
+        name: "Transition",
+        nodeId: "transitionTo",
+        icon: <StartIcon/>,
+        defaultData: { workflowName: "" },
+        onClick: (flow) => {
+            const viewport = flow.getViewport();
+            flow.addNodes([
+                {
+                    id: generateGUID(),
+                    position: {x: viewport.x, y: viewport.y },
+                    type: "transitionTo",
+                    data: { label: "", workflowName: "" }
+                }
+            ])
+        }
+    }
+]
+
+
+export default function App() {
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const reactFlowWrapper = useRef(null);
+    const nodeTypes = useMemo(() => (
+        {
+            startNode: StartNode,
+            transitionTo: TransitionToNode
+        }
+    ), []);
+
+    const onConnect = useCallback(
+        (params: any) => setEdges((eds) => addEdge(params, eds)),
+        [setEdges],
+    );
+
+    return (
+        <div style={{ width: '100vw', height: '100vh' }}>
+            <ReactFlowProvider>
+                <MiniDrawer nodeButtons={navButtons}/>
+                    <ReactFlow
+                        style={{
+                            background: "#121212"
+                        }}
+                        connectionLineType={ConnectionLineType.Step}
+                        nodeTypes={nodeTypes}
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                    >
+                        <Controls />
+                        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+                    </ReactFlow>
+            </ReactFlowProvider>
+        </div>
+    );
+}
