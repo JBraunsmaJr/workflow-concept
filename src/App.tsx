@@ -13,13 +13,16 @@ import MiniDrawer, { EditorNodeButton } from "./SideNav"
 import 'reactflow/dist/style.css';
 import StartNode from "./editor-nodes/StartNode";
 import TransitionToNode from "./editor-nodes/TransitionToNode";
+import DataManagementNode from "./editor-nodes/DataManagementNode"
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StartIcon from '@mui/icons-material/Start';
+import LockIcon from '@mui/icons-material/Lock';
+
 
 const initialNodes = [
     {
       id: '1',
-      position: { x: 0, y: 0 },
+      position: { x: 100, y: 100 },
       type: "startNode",
       data: {}
     }
@@ -67,6 +70,12 @@ const navButtons: EditorNodeButton[] = [
                 }
             ])
         }
+    },
+    {
+        name: "Data Management",
+        nodeId: "dataManagement",
+        icon: <LockIcon/>,
+        defaultData: { label: "" }
     }
 ]
 
@@ -78,7 +87,8 @@ export default function App() {
     const nodeTypes = useMemo(() => (
         {
             startNode: StartNode,
-            transitionTo: TransitionToNode
+            transitionTo: TransitionToNode,
+            dataManagement: DataManagementNode
         }
     ), []);
 
